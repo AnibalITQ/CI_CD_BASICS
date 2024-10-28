@@ -3,21 +3,55 @@ name: CI/CD Practice
 on:
   push:
     branches:
-      - main 
+      - main  # Ejecuta el workflow en cada push a "main"
   pull_request:
     branches:
-      - main  
-jobs:
-  build:
-    runs-on: ubuntu-latest
+      - main  # Ejecuta el workflow en cada PR a "main"
 
+jobs:
+  validate-html:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3 
+        uses: actions/checkout@v3
+
+      - name: Validate HTML
+        uses: cyb3r-jak3/html-validator-action@v1
+        with:
+          file: './index.html'  # Cambia la ruta si tu archivo HTML no está en la raíz
+          ignoreWarnings: 'yes' # Opcional, ignora advertencias
+
+  validate-css:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Validate CSS
+        uses: paambaati/css-validator@v1.0.0
+        with:
+          file: './styles.css'  # Cambia la ruta si tu archivo CSS no está en la raíz
+
+  test-accessibility:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Test Accessibility
+        uses: trivial-technology/pa11y-action@v3.0.2
+        with:
+          url: './index.html'  # URL local del archivo a probar
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [validate-html, validate-css, test-accessibility]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./  
+          publish_dir: ./  # Cambia si necesitas una carpeta específica
